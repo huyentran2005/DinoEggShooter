@@ -152,7 +152,7 @@ void BubbleGame::pushBoardDown()
 //    Thua neu cham gioi han
     for (int c = 0; c < COLS; c++)
         {
-            if (gs.cells[ROWS - 1][c].alive)
+            if (gs.cells[ROWS - 2][c].alive)
             {
                 gs.gameOver = true;
                 return;
