@@ -7,6 +7,7 @@
 #include <touchgfx/widgets/Box.hpp>
 #include <touchgfx/widgets/canvas/Line.hpp>
 #include <touchgfx/widgets/canvas/PainterRGB565.hpp>
+#include <touchgfx/widgets/canvas/Circle.hpp>
 #include <touchgfx/widgets/Image.hpp>
 
 class Screen2View : public Screen2ViewBase
@@ -20,8 +21,12 @@ public:
 private:
     BubbleGame game;
     int gameOverDelay = 0;
+    static const int AIM_DOTS = 15;
+    touchgfx::Circle aimDots[AIM_DOTS];
+    touchgfx::PainterRGB565 dotPainter;
     static const uint16_t BUBBLE_COLORS[6];
     Image eggSprites[ROWS * COLS];
+    Image fallingSprites[MAX_FALLING];
     Image currentEgg;
     touchgfx::Line aimLine;
     touchgfx::PainterRGB565 aimLinePainter;

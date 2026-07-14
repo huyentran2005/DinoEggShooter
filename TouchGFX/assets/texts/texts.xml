@@ -15,14 +15,14 @@
       <Text Id="__SingleUse_YGH4" Alignment="Left" TypographyId="Small">
         <Translation Language="GB">0</Translation>
       </Text>
-      <Text Id="__SingleUse_ZZZR" Alignment="Left" TypographyId="Small">
-        <Translation Language="GB"> Score: &lt;score&gt;</Translation>
+      <Text Id="__SingleUse_ZZZR" Alignment="Center" TypographyId="Small">
+        <Translation Language="GB">&lt;score&gt;</Translation>
       </Text>
     </TextGroup>
   </Texts>
   <Typographies>
-    <Typography Id="Default" Font="verdana.ttf" Size="20" Bpp="4" IsVector="no" Direction="LTR" FallbackCharacter="?" WildcardCharacters="0123456789" />
+    <Typography Id="Default" Font="AGENCYB.TTF" Size="27" Bpp="4" IsVector="no" Direction="LTR" FallbackCharacter="?" WildcardCharacters="0123456789" />
     <Typography Id="Large" Font="verdana.ttf" Size="40" Bpp="4" IsVector="no" Direction="LTR" FallbackCharacter="?" WildcardCharacters="0123456789" />
-    <Typography Id="Small" Font="verdana.ttf" Size="14" Bpp="4" IsVector="no" Direction="LTR" FallbackCharacter="?" WildcardCharacters="0123456789" />
+    <Typography Id="Small" Font="AGENCYB.TTF" Size="16" Bpp="4" IsVector="no" Direction="LTR" FallbackCharacter="?" WildcardCharacters="0123456789" />
   </Typographies>
 </TextDatabase>

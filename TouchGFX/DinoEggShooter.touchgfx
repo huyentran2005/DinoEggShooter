@@ -6,21 +6,21 @@
         "Components": [
           {
             "Type": "ScalableImage",
-            "Name": "scalableImage1",
+            "Name": "bk",
             "Width": 240,
             "Height": 320,
             "Filename": "background1.png",
-            "ScalingAlgorithm": "Bilinear Interpolation"
+            "ScalingAlgorithm": "Nearest-neighbor"
           },
           {
             "Type": "Button",
             "Name": "start",
-            "X": 88,
-            "Y": 220,
-            "Width": 64,
-            "Height": 64,
-            "Pressed": "start.png",
-            "Released": "start.png"
+            "X": 75,
+            "Y": 243,
+            "Width": 90,
+            "Height": 41,
+            "Pressed": "play.png",
+            "Released": "play.png"
           }
         ],
         "Interactions": [
@@ -44,36 +44,81 @@
         "CanvasBufferSize": 3600,
         "Components": [
           {
+            "Type": "Circle",
+            "Name": "fake",
+            "Width": 105,
+            "Height": 95,
+            "Color": {
+              "Red": 255,
+              "Green": 255,
+              "Blue": 255
+            },
+            "CenterX": 40.0,
+            "CenterY": 40.0,
+            "Radius": 2.0,
+            "EndAngle": 360.0,
+            "CapPrecision": "Butt"
+          },
+          {
             "Type": "Button",
             "Name": "home_fake_hidden",
-            "Width": 80,
-            "Height": 80,
-            "Pressed": "home.png",
-            "Released": "home.png"
+            "Width": 64,
+            "Height": 29,
+            "Pressed": "home1.png",
+            "Released": "home1.png"
           },
           {
             "Type": "ScalableImage",
-            "Name": "scalableImage1",
+            "Name": "bk",
             "Width": 240,
             "Height": 320,
             "Filename": "background2.png",
             "ScalingAlgorithm": "Nearest-neighbor"
           },
           {
+            "Type": "Line",
+            "Name": "line1",
+            "X": 12,
+            "Y": 237,
+            "Width": 205,
+            "Height": 15,
+            "Color": {
+              "Red": 247,
+              "Green": 25,
+              "Blue": 25
+            },
+            "StartX": 5.0,
+            "StartY": 5.0,
+            "EndX": 210.0,
+            "EndY": 5.0,
+            "LineWidth": 1.5,
+            "LineEndingStyle": "Butt"
+          },
+          {
             "Type": "Container",
             "Name": "ballContainer",
             "X": 20,
+            "Y": 25,
             "Width": 197,
-            "Height": 320,
+            "Height": 295,
             "Components": []
+          },
+          {
+            "Type": "ScalableImage",
+            "Name": "bk_score",
+            "X": 52,
+            "Width": 133,
+            "Height": 24,
+            "Filename": "score.png",
+            "ScalingAlgorithm": "Nearest-neighbor"
           },
           {
             "Type": "TextArea",
             "Name": "scoreLabel",
-            "X": 20,
-            "Y": 302,
-            "Width": 150,
-            "Height": 18,
+            "X": 60,
+            "Y": 2,
+            "Width": 120,
+            "Height": 20,
             "TextId": "__SingleUse_ZZZR",
             "TextRotation": "0",
             "Color": {
@@ -88,23 +133,23 @@
             }
           },
           {
-            "Type": "Line",
-            "Name": "line1",
-            "X": 12,
-            "Y": 234,
-            "Width": 205,
-            "Height": 46,
-            "Color": {
-              "Red": 247,
-              "Green": 25,
-              "Blue": 25
-            },
-            "StartX": 5.0,
-            "StartY": 5.0,
-            "EndX": 210.0,
-            "EndY": 5.0,
-            "LineWidth": 1.5,
-            "LineEndingStyle": "Butt"
+            "Type": "ScalableImage",
+            "Name": "dino",
+            "Y": 231,
+            "Width": 89,
+            "Height": 89,
+            "Filename": "dino.png",
+            "ScalingAlgorithm": "Nearest-neighbor"
+          },
+          {
+            "Type": "ScalableImage",
+            "Name": "dino2",
+            "X": 151,
+            "Y": 237,
+            "Width": 89,
+            "Height": 89,
+            "Filename": "dino2.png",
+            "ScalingAlgorithm": "Nearest-neighbor"
           }
         ],
         "Interactions": [
@@ -138,28 +183,39 @@
         "Components": [
           {
             "Type": "ScalableImage",
-            "Name": "bg",
+            "Name": "bk",
             "Width": 240,
             "Height": 320,
             "Filename": "screen3.png",
             "ScalingAlgorithm": "Nearest-neighbor"
           },
           {
-            "Type": "Image",
-            "Name": "gameover",
-            "X": 88,
-            "Y": 66,
+            "Type": "Button",
+            "Name": "home",
+            "X": 44,
+            "Y": 186,
             "Width": 64,
-            "Height": 64,
-            "RelativeFilename": "game-over.png"
+            "Height": 29,
+            "Pressed": "home1.png",
+            "Released": "home1.png"
+          },
+          {
+            "Type": "Button",
+            "Name": "resume",
+            "X": 132,
+            "Y": 186,
+            "Width": 64,
+            "Height": 29,
+            "Pressed": "resume.png",
+            "Released": "resume.png"
           },
           {
             "Type": "TextArea",
             "Name": "score",
             "X": 30,
-            "Y": 150,
+            "Y": 122,
             "Width": 180,
-            "Height": 20,
+            "Height": 38,
             "TextId": "__SingleUse_KN20",
             "TextRotation": "0",
             "Color": {
@@ -172,16 +228,6 @@
               "UseBuffer": true,
               "BufferSize": 30
             }
-          },
-          {
-            "Type": "Button",
-            "Name": "home",
-            "X": 80,
-            "Y": 160,
-            "Width": 80,
-            "Height": 80,
-            "Pressed": "home.png",
-            "Released": "home.png"
           }
         ],
         "Interactions": [
@@ -196,6 +242,19 @@
               "ScreenTransitionType": "ScreenTransitionCover",
               "ScreenTransitionDirection": "East",
               "ActionComponent": "Screen1"
+            }
+          },
+          {
+            "InteractionName": "Interaction2",
+            "Trigger": {
+              "Type": "TriggerClicked",
+              "TriggerComponent": "resume"
+            },
+            "Action": {
+              "Type": "ActionGotoScreen",
+              "ScreenTransitionType": "ScreenTransitionCover",
+              "ScreenTransitionDirection": "East",
+              "ActionComponent": "Screen2"
             }
           }
         ]

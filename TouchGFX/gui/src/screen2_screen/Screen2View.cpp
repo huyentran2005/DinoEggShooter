@@ -4,12 +4,22 @@
 #include <cmath>
 #include <cstdio>
 
+#include <cmsis_os.h>
+extern osMessageQueueId_t myQueue01Handle;
+extern "C"
+{
+    void PlayShootSound(void);
+    void PlayStartGameSound(void);
+    void PlayGameOverSound(void);
+}
+
 Screen2View::Screen2View() { }
 
 void Screen2View::setupScreen()
 {
     Screen2ViewBase::setupScreen();
     game.init();
+    PlayStartGameSound();
 
     for(int i = 0; i < ROWS * COLS; i++)
     {
@@ -17,24 +27,41 @@ void Screen2View::setupScreen()
 
         add(eggSprites[i]);
     }
+    for(int i = 0; i < MAX_FALLING; i++)
+    {
+        fallingSprites[i].setVisible(false);
+        add(fallingSprites[i]);
+    }
 
     currentEgg.setBitmap(getBitmap(game.gs.currentColor));
     currentEgg.setVisible(true);
     add(currentEgg);
 
     nextEgg.setBitmap(getBitmap(game.gs.nextColor));
-    nextEgg.setXY(SCREEN_W - 60, SCREEN_H - 40);  // góc phải dưới
+    nextEgg.setXY(50, SCREEN_H - 50);  // góc phải dưới
     nextEgg.setVisible(true);
     add(nextEgg);
 
     flyingBall.setVisible(false);
     add(flyingBall);
 
-    aimLine.setPosition(0, 0, SCREEN_W, SCREEN_H);
-    aimLinePainter.setColor(Color::getColorFromRGB(255, 255, 100));
-    aimLine.setPainter(aimLinePainter);
-    aimLine.setVisible(true);
-    add(aimLine);
+
+    dotPainter.setColor(
+        touchgfx::Color::getColorFromRGB(255,255,100)
+    );
+
+    for(int i = 0; i < AIM_DOTS; i++)
+    {
+        aimDots[i].setPosition(0,0,8,8);
+
+        aimDots[i].setRadius(3);
+
+        aimDots[i].setPainter(dotPainter);
+
+        aimDots[i].setVisible(true);
+
+        add(aimDots[i]);
+    }
 
     refreshBoard();
     updateScoreLabel();
@@ -43,18 +70,28 @@ void Screen2View::tearDownScreen() {
     Screen2ViewBase::tearDownScreen();
 }
 
+typedef struct
+  {
+      uint8_t x;
+      uint8_t y;
+      uint8_t button;
+  } JoystickData_t;
 
 void Screen2View::handleTickEvent()
 {
     Screen2ViewBase::handleTickEvent();
 
     game.updateBall();
+    game.updateFalling();
 
-    // Sau 2s nếu thua chuyển sang màn hình screen3
+    // Sau 6s nếu thua chuyển sang màn hình screen3
     if (game.gs.gameOver)
     {
     	gameOverDelay++;
 
+    	if(gameOverDelay == 10){
+    		PlayGameOverSound();
+    	}
     	if (gameOverDelay >= 120)
         {
         	presenter->gameOver(game.gs.score);
@@ -74,6 +111,30 @@ void Screen2View::handleTickEvent()
         game.pushBoardDown();
     }
 
+    JoystickData_t joy;
+
+    if(osMessageQueueGet(myQueue01Handle, &joy, NULL, 0) == osOK)
+    {
+        float minAngle = 0.15f;
+        float maxAngle = M_PI - 0.15f;
+
+        // Trái -> trái, phải -> phải
+        game.gs.aimAngle =
+            maxAngle -
+            ((float)joy.x / 255.0f) * (maxAngle - minAngle);
+
+        static bool oldButton = false;
+
+        if(joy.button &&
+           !oldButton &&
+           !game.gs.ball.active)
+        {
+            game.shootBall(game.gs.aimAngle);
+            PlayShootSound();
+        }
+
+        oldButton = joy.button;
+    }
 
     refreshBoard();
 
@@ -84,6 +145,7 @@ void Screen2View::handleClickEvent(const ClickEvent& event)
 {
     if (event.getType() == ClickEvent::PRESSED)
     {
+
         // Tọa độ điểm chạm
         float touchX = event.getX();
         float touchY = event.getY();
@@ -103,6 +165,7 @@ void Screen2View::handleClickEvent(const ClickEvent& event)
 
         game.gs.aimAngle = angle;
         game.shootBall(angle);
+        PlayShootSound();
         refreshBoard();
     }
 }
@@ -154,42 +217,58 @@ void Screen2View::refreshBoard()
 	);
 	currentEgg.setXY(
 	    SCREEN_W/2 - 12,
-	    SCREEN_H - 40
+	    SCREEN_H - 60
 	);
 	currentEgg.setVisible(!game.gs.ball.active);
 	currentEgg.invalidate();
 
 
 	nextEgg.setBitmap(getBitmap(game.gs.nextColor));
-	nextEgg.setXY(SCREEN_W - 60, SCREEN_H - 40);
+	nextEgg.setXY(50, SCREEN_H - 50);
 	nextEgg.invalidate();
 
 	// Vẽ đường ngắm hướng bắn
+//	float startX = SCREEN_W / 2.0f;
+//	float startY = SCREEN_H - 50.0f;
+//	float lineLength = 100.0f;
+//
+//	float endX = startX + cosf(game.gs.aimAngle) * lineLength;
+//	float endY = startY - sinf(game.gs.aimAngle) * lineLength;
+//
+//	aimLine.setStart(startX, startY);
+//	aimLine.setEnd(endX, endY);
+//	aimLine.setLineWidth(3.0f);
+//	aimLine.setLineEndingStyle(Line::ROUND_CAP_ENDING);
+//	aimLinePainter.setColor(Color::getColorFromRGB(255, 255, 100));
+//	aimLine.setPainter(aimLinePainter);
+//	aimLine.invalidate();
+//	aimLine.setVisible(!game.gs.ball.active);
+//	aimLine.invalidate();
+
 	float startX = SCREEN_W / 2.0f;
 	float startY = SCREEN_H - 50.0f;
-	float lineLength = 100.0f;
 
-	float endX = startX + cosf(game.gs.aimAngle) * lineLength;
-	float endY = startY - sinf(game.gs.aimAngle) * lineLength;
+	for(int i = 0; i < AIM_DOTS; i++)
+	{
+	    float dist = 15.0f + i * 15.0f;
 
-	aimLine.setStart(startX, startY);
-	aimLine.setEnd(endX, endY);
-	aimLine.setLineWidth(3.0f);
-	aimLine.setLineEndingStyle(Line::ROUND_CAP_ENDING);
-	aimLinePainter.setColor(Color::getColorFromRGB(255, 255, 100));
-	aimLine.setPainter(aimLinePainter);
-	aimLine.invalidate();
+	    int x =
+	        startX +
+	        cosf(game.gs.aimAngle) * dist;
 
-    // Hứơng xoay của cannon
-//    float angleDeg = game.gs.aimAngle * 180.0f / M_PI;
-//    if (angleDeg < 0.0f)   angleDeg = 0.0f;
-//    if (angleDeg > 180.0f) angleDeg = 180.0f;
-//    float rotateDeg = -angleDeg + 90.0f;
-//    cannon.updateZAngle(rotateDeg);
-//    cannon.invalidate();
+	    int y =
+	        startY -
+	        sinf(game.gs.aimAngle) * dist;
 
-	aimLine.setVisible(!game.gs.ball.active);
-	aimLine.invalidate();
+	    aimDots[i].setXY(x - 4, y - 4);
+
+	    aimDots[i].setVisible(
+	        !game.gs.ball.active
+	    );
+
+	    aimDots[i].invalidate();
+	}
+
 
     int idx = 0;
     if (game.gs.ball.active)
@@ -230,6 +309,26 @@ void Screen2View::refreshBoard()
 
             idx++;
         }
+    }
+    for(int i = 0; i < MAX_FALLING; i++)
+    {
+        if(game.gs.falling[i].active)
+        {
+            fallingSprites[i].setBitmap(
+                getBitmap(game.gs.falling[i].color));
+
+            fallingSprites[i].setXY(
+                (int)game.gs.falling[i].x - 12,
+                (int)game.gs.falling[i].y - 12);
+
+            fallingSprites[i].setVisible(true);
+        }
+        else
+        {
+            fallingSprites[i].setVisible(false);
+        }
+
+        fallingSprites[i].invalidate();
     }
 
     while(idx < ROWS * COLS)

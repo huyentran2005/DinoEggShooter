@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <cmath>
+#define MAX_FALLING 50
 
 constexpr int COLS      = 9;
 constexpr int ROWS      = 12;
@@ -18,6 +19,16 @@ enum BubbleColor : uint8_t {
 struct Bubble {
     BubbleColor color;
     bool alive;
+};
+
+struct FallingBubble
+{
+    float x;
+    float y;
+    float vy;
+
+    BubbleColor color;
+    bool active;
 };
 
 struct ShootBall {
@@ -37,6 +48,7 @@ struct GameState {
     bool gameOver;
     uint8_t rng;
     bool topRowOdd = true;
+    FallingBubble falling[MAX_FALLING];
 };
 
 class BubbleGame {
@@ -53,6 +65,8 @@ public:
     void pushBoardDown();
     bool isShortRow(int row);
     int getRowSize(int row);
+    void updateFalling();
+    void spawnFallingBubble(int row, int col);
 private:
     bool pixelToCell(int px, int py, int& row, int& col);
     int  getNeighbors(int row, int col, int outR[], int outC[]);

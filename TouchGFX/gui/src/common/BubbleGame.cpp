@@ -1,6 +1,9 @@
 #include <gui/common/BubbleGame.hpp>
 #include <cstring>
-
+extern "C"
+{
+    void PlayBreakSound(void);
+}
 BubbleGame::BubbleGame() {
     gs.rng = 123;
 }
@@ -14,6 +17,10 @@ void BubbleGame::init() {
             gs.cells[r][c].color = (BubbleColor)(rng8() % NUM_COLORS);
             gs.cells[r][c].alive = true;
         }
+    }
+    for(int i = 0; i < MAX_FALLING; i++)
+    {
+        gs.falling[i].active = false;
     }
 
     gs.currentColor = (BubbleColor)(rng8() % NUM_COLORS);
@@ -37,7 +44,7 @@ uint8_t BubbleGame::rng8() {
 // Hàng lẻ sẽ bị lệch nửa ô so với hàng chẵn
 void BubbleGame::cellToPixel(int row, int col, int& px, int& py) {
 	const int SIDE_MARGIN = 13;
-	const int TOP_MARGIN = 18;
+	const int TOP_MARGIN = 23;
 
 	int offsetX = isShortRow(row) ? R_PIX : 0;
     px = SIDE_MARGIN + offsetX + col * (R_PIX * 2) + R_PIX;
@@ -50,7 +57,7 @@ void BubbleGame::cellToPixel(int row, int col, int& px, int& py) {
 // khi bắn lên lưới sẽ nằm ở (row, col) nào
 bool BubbleGame::pixelToCell(int px, int py, int& row, int& col) {
 	const int SIDE_MARGIN = 13;
-	const int TOP_MARGIN = 18;
+	const int TOP_MARGIN = 23;
 
     row = (int)roundf((py - TOP_MARGIN - R_PIX) / (R_PIX * 1.72f));
 
@@ -142,62 +149,100 @@ void BubbleGame::pushBoardDown()
         }
     }
 
+//    Thua neu cham gioi han
+    for (int c = 0; c < COLS; c++)
+        {
+            if (gs.cells[ROWS - 1][c].alive)
+            {
+                gs.gameOver = true;
+                return;
+            }
+    }
+
 }
 
 // Cập nhật trạng thái bóng bắn
 void BubbleGame::updateBall() {
-	const int SIDE_MARGIN = 13;
+    const int SIDE_MARGIN = 13;
     if (!gs.ball.active) return;
 
     gs.ball.x += gs.ball.vx;
     gs.ball.y += gs.ball.vy;
 
-    // Nảy tường trái/phải
+    // Nảy tường
     if (gs.ball.x < R_PIX + SIDE_MARGIN) {
-        gs.ball.x  = R_PIX + SIDE_MARGIN;
+        gs.ball.x = R_PIX + SIDE_MARGIN;
         gs.ball.vx = -gs.ball.vx;
     }
     if (gs.ball.x > SCREEN_W - R_PIX - SIDE_MARGIN) {
-        gs.ball.x  = SCREEN_W - R_PIX - SIDE_MARGIN;
+        gs.ball.x = SCREEN_W - R_PIX - SIDE_MARGIN;
         gs.ball.vx = -gs.ball.vx;
     }
 
-    // Kiểm tra va chạm
-    // Duyệt tất cả các ô có bóng trên lưới
-    //để tính tọa độ trên lưới của bóng bị bắn ra
     bool hit = false;
-    int hitR = 0, hitC = 0;
 
-    for (int r = 0; r < ROWS && !hit; r++) {
-    	int maxC = getRowSize(r);
-        for (int c = 0; c < maxC && !hit; c++) {
-            if (!gs.cells[r][c].alive) continue;
-            int px, py;
-            cellToPixel(r, c, px, py);
-            float dx   = gs.ball.x - px;
-            float dy   = gs.ball.y - py;
-            float dist = sqrtf(dx * dx + dy * dy);
-            if (dist < R_PIX * 1.8f) {
-                hit = true;
-                pixelToCell((int)gs.ball.x, (int)gs.ball.y, hitR, hitC);
-            }
-        }
+    // 1. Kiểm tra va chạm với trần
+    if (gs.ball.y <= R_PIX + 23) { // 23 là TOP_MARGIN
+        hit = true;
     }
 
-    if (gs.ball.y <= R_PIX || hit) {
-        if (gs.cells[hitR][hitC].alive) {
-            int nr[6], nc[6];
-            int n = getNeighbors(hitR, hitC, nr, nc);
-            for (int i = 0; i < n; i++) {
-                if (!gs.cells[nr[i]][nc[i]].alive) {
-                    hitR = nr[i];
-                    hitC = nc[i];
+    // 2. Kiểm tra va chạm với các bóng khác
+    if (!hit) {
+        for (int r = 0; r < ROWS; r++) {
+            int maxC = getRowSize(r);
+            for (int c = 0; c < maxC; c++) {
+                if (!gs.cells[r][c].alive) continue;
+
+                int px, py;
+                cellToPixel(r, c, px, py);
+                float dx = gs.ball.x - px;
+                float dy = gs.ball.y - py;
+                float distSq = dx * dx + dy * dy;
+
+                // Khoảng cách va chạm: (R+R)^2 = (2*12)^2 = 576
+                // Dùng 1.8f * R_PIX để bóng "lún" vào một chút mới tính là chạm, tránh chạm sượt
+                if (distSq < (R_PIX * 1.8f) * (R_PIX * 1.8f)) {
+                    hit = true;
                     break;
                 }
             }
+            if (hit) break;
         }
-        placeBall(hitR, hitC);
     }
+
+    if (hit) {
+        // Tìm ô TRỐNG gần nhất với vị trí hiện tại của quả bóng đang bay
+        int bestR = -1, bestC = -1;
+        float minDist = 999999.0f;
+
+        for (int r = 0; r < ROWS; r++) {
+            int maxC = getRowSize(r);
+            for (int c = 0; c < maxC; c++) {
+                if (gs.cells[r][c].alive) continue; // Ô đã có bóng thì bỏ qua
+
+                int px, py;
+                cellToPixel(r, c, px, py);
+                float dx = gs.ball.x - px;
+                float dy = gs.ball.y - py;
+                float dSq = dx * dx + dy * dy;
+
+                if (dSq < minDist) {
+                    minDist = dSq;
+                    bestR = r;
+                    bestC = c;
+                }
+            }
+        }
+
+        if (bestR != -1) {
+            placeBall(bestR, bestC);
+        } else {
+            gs.ball.active = false; // Trường hợp lỗi không tìm thấy ô
+        }
+    }
+
+    // Kiểm tra bóng bay ra ngoài màn hình dưới (nếu có lỗi)
+    if (gs.ball.y > SCREEN_H) gs.ball.active = false;
 }
 
 // Đặt bóng bắn dính trên lưới và xử lý nổ
@@ -218,9 +263,12 @@ void BubbleGame::placeBall(int row, int col) {
 
     if (count >= 3) {
         for (int i = 0; i < count; i++) {
-            gs.cells[matchR[i]][matchC[i]].alive = false;
+        	spawnFallingBubble(matchR[i], matchC[i]);
+
+        	gs.cells[matchR[i]][matchC[i]].alive = false;
         }
         gs.score += count * 10;
+        PlayBreakSound();
         dropFloating();
     }
 
@@ -352,9 +400,52 @@ void BubbleGame::dropFloating() {
     	int maxC = getRowSize(r);
         for (int c = 0; c < maxC; c++) {
             if (gs.cells[r][c].alive && !connected[r][c]) {
-                gs.cells[r][c].alive = false;
+            	spawnFallingBubble(r, c);
+
+            	gs.cells[r][c].alive = false;
                 gs.score += 5; // bonus điểm bóng rơi
             }
+        }
+    }
+}
+
+void BubbleGame::spawnFallingBubble(int row, int col)
+{
+    for(int i = 0; i < MAX_FALLING; i++)
+    {
+        if(!gs.falling[i].active)
+        {
+            int px, py;
+            cellToPixel(row, col, px, py);
+
+            gs.falling[i].x = px;
+            gs.falling[i].y = py;
+
+            gs.falling[i].vy = 1.0f;
+
+            gs.falling[i].color =
+                gs.cells[row][col].color;
+
+            gs.falling[i].active = true;
+            break;
+        }
+    }
+}
+
+void BubbleGame::updateFalling()
+{
+    for(int i = 0; i < MAX_FALLING; i++)
+    {
+        if(!gs.falling[i].active)
+            continue;
+
+        gs.falling[i].vy += 0.25f; // gia tốc trọng trường
+
+        gs.falling[i].y += gs.falling[i].vy;
+
+        if(gs.falling[i].y > SCREEN_H + 30)
+        {
+            gs.falling[i].active = false;
         }
     }
 }
