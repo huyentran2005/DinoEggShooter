@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include <cmsis_os.h>
+#include "stm32f4xx_hal.h" 
 extern osMessageQueueId_t myQueue01Handle;
 extern "C"
 {
@@ -19,6 +20,7 @@ void Screen2View::setupScreen()
 {
     Screen2ViewBase::setupScreen();
     game.init();
+    game.seedRandom(HAL_GetTick());
     PlayStartGameSound();
 
     for(int i = 0; i < ROWS * COLS; i++)

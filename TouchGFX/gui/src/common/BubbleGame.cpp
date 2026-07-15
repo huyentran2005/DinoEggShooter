@@ -8,6 +8,11 @@ BubbleGame::BubbleGame() {
     gs.rng = 123;
 }
 
+void BubbleGame::seedRandom(uint32_t seed) {
+    if (seed == 0) seed = 1;
+    gs.rng = seed;
+}
+
 void BubbleGame::init() {
     memset(gs.cells, 0, sizeof(gs.cells));
     gs.topRowOdd = true;

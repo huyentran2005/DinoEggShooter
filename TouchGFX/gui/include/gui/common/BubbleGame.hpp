@@ -58,6 +58,7 @@ public:
     BubbleGame();
 
     void init();                    // Khởi tạo lưới + random bong bóng
+    void seedRandom(uint32_t seed);
     void shootBall(float angle);
     void updateBall();              // Cập nhật bóng đang bay
     void placeBall(int row, int col);
